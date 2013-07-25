@@ -3,7 +3,7 @@ header('Content-Type: image/png');
 function rgbFromHex($hexValue) {
  
         //$hexValue = str_replace('#', '', $hexValue);
-        //SILLY ME WAS EXPECTING # TO BE PASSED. BUT USING $_GET[] VARIABLES THAT ISN'T POSSIBLE... DAMMIT.
+        //SILLY ME WAS EXPECTING # TO BE PASSED. BUT USING $_GET[] VARIABLES THAT ISN'T POSSIBLE...  
        
         if (strlen($hexValue) == 3) { //CHECK FOR SHORTHAND
                 $r = hexdec(substr($hexValue, 0, 1) . substr($hexValue, 0, 1));
@@ -32,9 +32,17 @@ function createSwatch($colors){
                 imagefilledrectangle($im, $x, 0, $x + $colWidth, 40, $color);
                 $x += $colWidth;
         }
+
+     if ($colors === NULL) {
+     	$textColor = imagecolorallocate($im, 255, 255, 255);
+     	$text = 'Try using a hexValue';
+     	imagestring($im, 20, 0, 10, $text, $textColor);
+     }
      
     return imagepng($im);
 }
  
 createSwatch($_GET['color'])
 ?>
+
+
