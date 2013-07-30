@@ -206,5 +206,52 @@ function createSwatch($colors)
 	return imagepng($im);
 }
 
-createSwatch($_GET['color'])
+function gradient($start, $end)
+{
+    $length = 62;
+
+    $steps = array();
+    array_push($steps, $start);
+    $start = hex2rgb($start);
+
+    $end = hex2rgb($end);
+
+    $grad = array();
+
+    for ($i = 0, $len = count($start); $i < $len; $i++) {
+        $grad[$i] = ($end[$i] - $start[$i]) / $length;
+    }
+
+    for ($step = 0; $step < $length; $step++) {
+        $color = '';
+        for ($comp = 0, $len = count($grad); $comp < $len; $comp++) {
+            $start[$comp] += $grad[$comp];
+            $color .= dechex($start[$comp]);
+        }
+        array_push($steps, $color);
+    }
+    return createSwatch(implode(',', $steps));
+}
+
+function hex2rgb($hex)
+{
+   if(strlen($hex) == 3) {
+      $r = hexdec(str_repeat($hex[0], 2));
+      $g = hexdec(str_repeat($hex[1], 2));
+      $b = hexdec(str_repeat($hex[2], 2));
+   } else {
+      $r = hexdec(substr($hex, 0, 2));
+      $g = hexdec(substr($hex, 2, 2));
+      $b = hexdec(substr($hex, 4, 2));
+   }
+   return array($r, $g, $b);
+}
+
+if ($_GET['color']) {
+	createSwatch($_GET['color']);
+}
+else {
+	$colors = explode($_GET['gradient'], ',');
+	gradient($colors[0], $colors[1]);
+}
 ?>
