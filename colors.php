@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: image/png');
 $colornames = array(
-    "pink" => "FFC0CB",
+	"pink" => "FFC0CB",
 	"lightpink" => "FFB6C1",
 	"hotpink" => "FF69B4",
 	"deeppink" => "FF1493",
