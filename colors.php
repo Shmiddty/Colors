@@ -251,7 +251,7 @@ if ($_GET['color']) {
 	createSwatch($_GET['color']);
 }
 else {
-	$colors = explode($_GET['gradient']);
+	$colors = explode($_GET['gradient'], ',');
 	gradient($colors[0], $colors[1]);
 }
 ?>
