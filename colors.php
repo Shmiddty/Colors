@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: image/png');
 $colornames = array(
-	"pink" => "FFC0CB",
+    "pink" => "FFC0CB",
 	"lightpink" => "FFB6C1",
 	"hotpink" => "FF69B4",
 	"deeppink" => "FF1493",
@@ -118,7 +118,7 @@ $colornames = array(
 	"white" => "FFFFFF",
 	"snow" => "FFFAFA",
 	"poop" => "825D1E",
-	"okok" => "825D1E",
+	"okok" => "poop,poop,poop,poop,poop,poop,poop", // heh. poop.
 	"honeydew" => "F0FFF0",
 	"mintcream" => "F5FFFA",
 	"azure" => "F0FFFF",
@@ -150,24 +150,30 @@ $colornames = array(
 	"slategrey" => "708090",
 	"darkslategray" => "2F4F4F",
 	"darkslategrey" => "2F4F4F",
-	"black" => "000000"
+	"black" => "000000",
+	"roygbiv" => "red,orange,yellow,green,blue,indigo,violet",
+	"murica" => "blue,blue,blue,blue,blue,blue,blue,white,red,white,red,white,red",
+	"canuck" => "C40C0C",
+	"rlemon" => "canuck,canuck" // because the logic isn't good enough to recognize just one canuck. 
 );
+
 
 function rgbFromHex($hexValue)
 {
-
-	// $hexValue = str_replace('#', '', $hexValue);
-	// SILLY ME WAS EXPECTING # TO BE PASSED. BUT USING $_GET[] VARIABLES THAT ISN'T POSSIBLE...
-
-	if (strlen($hexValue) == 3) { //CHECK FOR SHORTHAND
-		$r = hexdec(substr($hexValue, 0, 1) . substr($hexValue, 0, 1));
-		$g = hexdec(substr($hexValue, 1, 1) . substr($hexValue, 1, 1));
-		$b = hexdec(substr($hexValue, 2, 1) . substr($hexValue, 2, 1));
+	if (strlen($hexValue) == 3) { //shorthand check
+		$r = hexdec(str_repeat($hexValue[0], 2));
+		$g = hexdec(str_repeat($hexValue[1], 2));
+		$b = hexdec(str_repeat($hexValue[2], 2));
 	}
-	else { //FUNCTION FOR NORMAL 6 DIGIT VALUES
+	else if (strlen($hexValue) == 6){ //standard hex color
 		$r = hexdec(substr($hexValue, 0, 2));
 		$g = hexdec(substr($hexValue, 2, 2));
 		$b = hexdec(substr($hexValue, 4, 2));
+	}
+	else{
+		$r = 0;
+		$g = 0;
+		$b = 0;
 	}
 
 	$rgb = array(
@@ -178,33 +184,103 @@ function rgbFromHex($hexValue)
 	return $rgb;
 }
 
-function rgbFromName($name)
+function getHexByName($name)
 {
 	global $colornames;
-	if ($colornames[$name]) {
-		return rgbFromHex($colornames[$name]);
+	if (isset($colornames[$name])) {
+		return $colornames[$name];
 	}
 	else {
 		return null;
 	}
 }
 
-function createSwatch($colors)
-{
-	$colArray = explode(",", $colors);
-	$colWidth = 200 / count($colArray);
-	$im = imagecreate(200, 40);
-	$x = 0;
-	foreach($colArray as $col) {
-		$rgb = rgbFromName(strtolower($col));
-		if (!$rgb) $rgb = rgbFromHex($col); //DON'T DO ANYTHING IF A COLOR ISN'T PROVIDED
-		$color = imagecolorallocate($im, $rgb[0], $rgb[1], $rgb[2]); //FIND A BETTER WAY TO DO THIS.
-		imagefilledrectangle($im, $x, 0, $x + $colWidth, 40, $color);
-		$x+= $colWidth;
+/*
+ * $input - a string, possibly comma-separated list of HexValues and/or color names
+ *
+ * returns an array of [r, g, b] arrays
+ */
+function parseColors($input){
+	$colorArray = array();
+	$parts = explode(",", $input);
+	
+	foreach($parts as $color){
+		$byName = getHexByName($color);
+		if(!isset($byName)){
+			array_push($colorArray, rgbFromHex($color));
+		} else{
+			if (strpos($byName, ",") !== FALSE){
+				// we're dealing with a multi-part name, eg: roygbiv
+				foreach(parseColors($byName) as $col){
+					array_push($colorArray, $col);
+				}
+			} else{
+				array_push($colorArray, rgbFromHex($byName));
+			}
+		}
 	}
-
-	return imagepng($im);
+	
+	return $colorArray;
 }
 
-createSwatch($_GET['color'])
+/* 
+ * $colorArray - an array of [r, g, b] arrays. 
+ *
+ * returns an array of [r, g, b] arrays. 
+ */
+function interpolateGradient($colorArray){
+	$output = array();
+	$arrLen = count($colorArray);
+	$gradWidth = 200 / $arrLen;
+	
+	
+	for($index = 0;$index < $arrLen - 1; $index++){
+		$curr = $colorArray[$index];
+		$next = $colorArray[$index+1];
+		
+		for($step = 0; $step < $gradWidth; $step++){
+			array_push($output, array(
+				$curr[0] + $step / $gradWidth * ($next[0] - $curr[0]),
+				$curr[1] + $step / $gradWidth * ($next[1] - $curr[1]),
+				$curr[2] + $step / $gradWidth * ($next[2] - $curr[2])
+			));
+		}
+	}
+	
+	
+	return $output;
+}
+
+/* 
+ * $colorArray - an array of [r, g, b] arrays. 
+ *
+ * returns an image. 
+ */
+function createSwatch($colorArray)
+{
+	$img = imagecreate(200, 40);
+	$colWidth = 200 / count($colorArray);
+	$x = 0;
+	foreach($colorArray as $rgb) {
+		$color = imagecolorallocate($img, $rgb[0], $rgb[1], $rgb[2]);
+		imagefilledrectangle($img, $x, 0, $x + $colWidth, 40, $color);
+		$x += $colWidth;
+	}
+	return imagepng($img);
+}
+
+
+$colors = $_GET['color'];
+$gradient = $_GET['gradient'];
+
+if (isset($colors)) {
+	$colorArray = parseColors(strtolower($colors));
+} else if (isset($gradient)){
+	$colorArray = interpolateGradient(parseColors(strtolower($gradient)));
+}
+
+if (isset($colorArray)){
+	createSwatch($colorArray);
+}
+
 ?>
