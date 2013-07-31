@@ -154,7 +154,8 @@ $colornames = array(
 	"roygbiv" => "red,orange,yellow,green,blue,indigo,violet",
 	"murica" => "blue,blue,blue,blue,blue,blue,blue,white,red,white,red,white,red",
 	"canuck" => "C40C0C",
-	"rlemon" => "canuck,canuck" // because the logic isn't good enough to recognize just one canuck. 
+	"rlemon" => "canuck,canuck", // because the logic isn't good enough to recognize just one canuck. 
+	"jhawins" => "blue,blue,blue,blue,blue,blue,blue,white,red,white,red,white,red"
 );
 
 
